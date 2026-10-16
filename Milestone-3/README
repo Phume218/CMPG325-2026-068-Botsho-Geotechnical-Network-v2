@@ -1,0 +1,271 @@
+# Milestone 3 – Final Technical Report and Project Completion
+
+## CMPG 325 – Computer Networks
+
+**Project:** Network Design for Botsho Geotechnical Engineers  
+**Project ID:** CMPG325-2026-068  
+**Client ID:** CLI-068  
+**Organisation:** Botsho Geotechnical Engineers  
+**Industry:** Engineering  
+**Simulation Tool:** Cisco Packet Tracer  
+
+---
+
+## 1. Milestone 3 Overview
+
+Milestone 3 represents the final stage of the Botsho Geotechnical Engineers network project.
+
+The purpose of this milestone is to present the completed network design, implementation, verification, testing evidence, and final technical documentation.
+
+The final network uses the assigned IPv4 address block:
+
+`172.30.42.0/23`
+
+The project addresses the assigned technical challenge of:
+
+**DHCP with scoped multi-VLAN address assignment**
+
+It also implements Change Request CR8, which requires a shared printer zone that can serve two departments.
+
+The final solution was validated through VLAN verification, trunk verification, DHCP pool and binding checks, client IPv4 configuration, and end-to-end connectivity testing.
+
+---
+
+## 2. Final Network Design
+
+The completed Packet Tracer network uses a centralised star topology.
+
+The final implementation includes:
+
+- 1 Cisco 2911 Router
+- 1 Cisco 2960 Layer 2 Switch
+- 2 Engineering PCs
+- 2 Administration PCs
+- 1 Shared Network Printer
+- 1 Server
+
+R1 provides:
+
+- Inter-VLAN routing
+- Default gateways
+- DHCP services
+
+SW1 provides:
+
+- VLAN switching
+- Access-port connectivity
+- IEEE 802.1Q trunking
+
+The final Milestone 2 implementation uses a **Cisco 2911 router**. The Cisco 1941 used during Milestone 1 was replaced during implementation. This was a router-model change only and did not change the approved logical design, VLAN structure, VLSM addressing plan, router-on-a-stick design, DHCP scopes, or testing objectives.
+
+---
+
+## 3. VLAN Structure
+
+The final network uses four VLANs:
+
+| VLAN | Purpose | Network | Default Gateway |
+|---|---|---|---|
+| 10 | Engineering | 172.30.42.0/26 | 172.30.42.1 |
+| 20 | Administration | 172.30.42.64/26 | 172.30.42.65 |
+| 30 | Shared Printer | 172.30.42.128/28 | 172.30.42.129 |
+| 40 | Servers | 172.30.42.144/28 | 172.30.42.145 |
+
+The /26 departmental networks provide more host capacity for Engineering and Administration, while the /28 networks provide sufficient addressing for the smaller printer and server service zones.
+
+---
+
+## 4. Switch Port Allocation
+
+| SW1 Port | Connected Device | Mode | VLAN |
+|---|---|---|---|
+| Gi0/1 | R1 | 802.1Q Trunk | 10, 20, 30, 40 |
+| Fa0/1 | ENG-PC1 | Access | 10 |
+| Fa0/2 | ENG-PC2 | Access | 10 |
+| Fa0/3 | ADMIN-PC1 | Access | 20 |
+| Fa0/4 | ADMIN-PC2 | Access | 20 |
+| Fa0/5 | BOTSHO-PRINTER | Access | 30 |
+| Fa0/6 | BOTSHO-SERVER | Access | 40 |
+
+---
+
+## 5. Router-on-a-Stick
+
+Router-on-a-stick is used to provide communication between the four VLANs.
+
+The Cisco 2911 router uses subinterfaces associated with the VLANs through IEEE 802.1Q tagging.
+
+The verified gateway addresses are:
+
+- VLAN 10 – `172.30.42.1`
+- VLAN 20 – `172.30.42.65`
+- VLAN 30 – `172.30.42.129`
+- VLAN 40 – `172.30.42.145`
+
+Traffic between VLANs is forwarded to R1, routed through the appropriate subinterface, and returned over the trunk to the destination VLAN.
+
+---
+
+## 6. Assigned Networking Challenge – Scoped Multi-VLAN DHCP
+
+The assigned technical challenge required DHCP to be configured and verified across multiple VLANs.
+
+Separate DHCP pools were configured for Engineering and Administration.
+
+| DHCP Pool | VLAN | Network | Default Gateway | Dynamic Range |
+|---|---|---|---|---|
+| ENGINEERING | 10 | 172.30.42.0/26 | 172.30.42.1 | 172.30.42.10–172.30.42.62 |
+| ADMINISTRATION | 20 | 172.30.42.64/26 | 172.30.42.65 | 172.30.42.70–172.30.42.126 |
+
+Reserved addresses were excluded from DHCP allocation.
+
+Engineering reserved range:
+
+`172.30.42.1 – 172.30.42.9`
+
+Administration reserved range:
+
+`172.30.42.65 – 172.30.42.69`
+
+The DHCP implementation was verified from both the router and client perspectives.
+
+Observed leases included:
+
+- Engineering: `172.30.42.10`
+- Engineering: `172.30.42.11`
+- Administration: `172.30.42.74`
+- Administration: `172.30.42.75`
+
+---
+
+## 7. CR8 Shared Printer Solution
+
+Change Request CR8 required a shared printer zone that could serve both Engineering and Administration.
+
+BOTSHO-PRINTER was placed in VLAN 30 and assigned the static address:
+
+`172.30.42.130/28`
+
+Default gateway:
+
+`172.30.42.129`
+
+The printer is placed in its own VLAN rather than directly inside either departmental network.
+
+Inter-VLAN routing through R1 allows both Engineering and Administration to reach the shared printer.
+
+Successful ping tests from both departments confirmed that the change request was implemented successfully.
+
+---
+
+## 8. Server Network
+
+BOTSHO-SERVER is placed in VLAN 40.
+
+The server uses the static address:
+
+`172.30.42.146/28`
+
+Default gateway:
+
+`172.30.42.145`
+
+Static addressing provides a predictable network location for the server and simplifies access and troubleshooting.
+
+---
+
+## 9. Testing and Verification
+
+The final network was tested progressively.
+
+Testing included:
+
+- VLAN membership verification
+- 802.1Q trunk verification
+- Router subinterface verification
+- Engineering DHCP verification
+- Administration DHCP verification
+- DHCP binding verification
+- Inter-VLAN connectivity testing
+- Engineering-to-printer testing
+- Administration-to-printer testing
+- Client-to-server testing
+
+### Final Test Results
+
+| Test | Result |
+|---|---|
+| SW1 VLAN Membership | Verified |
+| SW1 Trunk | Verified |
+| Engineering DHCP | Verified |
+| Administration DHCP | Verified |
+| DHCP Bindings | Verified |
+| Inter-VLAN Communication | Successful |
+| Engineering → Printer | Successful |
+| Administration → Printer | Successful |
+| Client → Server | Successful after repeat verification |
+
+During server testing, one initial ping contained a timeout. The test was repeated and the final verification completed successfully with 0% packet loss.
+
+The combined evidence confirms that addressing, VLAN membership, trunking, DHCP, and routing operate together correctly.
+
+---
+
+## 10. Critical Services Constraint
+
+The project requires critical file, print, and application services to remain accessible during business hours.
+
+Within the Packet Tracer simulation, predictable access is supported by:
+
+- Dedicated service VLANs
+- Static IPv4 addressing
+- Routed access from departmental VLANs
+
+The design supports predictable access within the scope of the simulation.
+
+---
+
+## 11. Milestone 3 Evidence
+
+This milestone contains the final project evidence, including:
+
+- Final technical report
+- Final Packet Tracer implementation
+- VLAN and trunk verification evidence
+- DHCP configuration and binding evidence
+- Client IPv4 configuration evidence
+- Shared-printer testing evidence
+- Server connectivity testing evidence
+- Inter-VLAN connectivity evidence
+- Final project verification results
+
+---
+
+## 12. Final Outcome
+
+The final Botsho Geotechnical Engineers network successfully demonstrates:
+
+- VLSM subnetting of the assigned `172.30.42.0/23` block
+- Four functional VLANs
+- IEEE 802.1Q trunking
+- Router-on-a-stick inter-VLAN routing
+- Scoped multi-VLAN DHCP
+- Static printer and server addressing
+- Shared printer access from both departments
+- Inter-VLAN communication
+- Server reachability
+- Successful end-to-end network verification
+
+The completed project progressed from client requirements and network design to Packet Tracer implementation and final verification.
+
+---
+
+## 13. Milestone 3 Conclusion
+
+The final implementation satisfies the major networking requirements demonstrated within the project scope.
+
+Engineering and Administration receive addresses from their correct DHCP scopes, while the shared printer and server remain at predictable static addresses.
+
+CR8 is satisfied because both departmental VLANs can successfully reach the shared printer in VLAN 30.
+
+The completed testing confirms that the VLAN, trunking, DHCP, addressing, and routing configurations operate together successfully.
